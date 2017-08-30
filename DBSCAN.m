@@ -52,7 +52,7 @@ function [IDX, isnoise, D]=DBSCAN(X,epsilon,MinPts)
             visited(i)=true;
             
             Neighbors=RegionQuery(i);
-            if numel(Neighbors)<MinPts
+            if length(Neighbors)<MinPts
                 % X(i,:) is NOISE
                 isnoise(i)=true;
             else
@@ -104,7 +104,7 @@ function [IDX, isnoise, D]=DBSCAN(X,epsilon,MinPts)
                 end
                   %Neighbors2 = Neighbors2 + (j - i)
                 %end
-                if numel(Neighbors2)>=MinPts
+                if length(Neighbors2)>=MinPts
                     Neighbors=[Neighbors Neighbors2];   %#ok
                 end
             end
