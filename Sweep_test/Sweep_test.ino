@@ -172,7 +172,7 @@ void DBSCAN_Main()
 
 }
 
-int DBSCAN()
+int DBSCAN()///////////////
 {
   int C = 0;
 
@@ -232,31 +232,39 @@ int DBSCAN()
 
 }
 
-void ExpandCluster(i, Neighbors, C)
+void ExpandCluster(i, Neighbors, C, n)////////////////
 {
   IDX[i] = C;
 
   k = 1;
   while true
   {
-    j = Neighbors(k);
+    if (((Neighbors[k] + i - 6) >= 0) && ((Neighbors[k] + i - 6) < n)){
+      j = Neighbors[k] + i - 6;
+    }
+    else if (((Neighbors[k] + i - 6) >= n)){
+      j = Neighbors[k] + i - 6 - n;
+    }
+    else {
+      j = j = Neighbors[k] + i - 6 + n;
+    }
 
-    if ~visited(j)
+    if !visited[j]
     {
-      visited(j) = true;
-      Neighbors2 = RegionQuery(j);
-      if numel(Neighbors2) >= MinPts
+      visited[j] = true;
+      Neighbors2 = RegionQuery(j);///////////////
+      if numel(Neighbors2) >= MinPts//////////////////////
       {
-        Neighbors = [Neighbors Neighbors2]; //#ok
+        Neighbors = [Neighbors Neighbors2]; //#ok//////////////
       }
     }
-    if IDX(j) == 0
+    if IDX[j] == 0
     {
-      IDX(j) = C;
+      IDX[j] = C;
     }
 
     k++;
-    if k > numel(Neighbors)
+    if k > numel(Neighbors)////////////
     {
       break;
     }
