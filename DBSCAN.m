@@ -24,7 +24,7 @@ function [IDX, isnoise, D]=DBSCAN(X,epsilon,MinPts)
             D(i,j) = sqrt((X(n+j-6,1) - X(i,1))^2 + (X(n+j-6,2) - X(i,2))^2);
         end
         for (j=7:1:11)
-            D(i,j) = sqrt((X(j-5,1) - X(i,1))^2 + (X(j-5,2) - X(i,2))^2);
+            D(i,j) = sqrt((X(j-6,1) - X(i,1))^2 + (X(j-6,2) - X(i,2))^2);
         end
     end
     for (i=6:1:n-5)
