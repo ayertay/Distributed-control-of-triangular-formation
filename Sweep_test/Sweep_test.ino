@@ -181,29 +181,29 @@ int DBSCAN()///////////////
   IDX = zeros(n, 1);//////////////
 
   //D = pdist2(X, X);
-  for (i = 0; i < 5; i++){
-    for (j=0; j<6; j++){
+  for (i = 0; i < 5; i++) {
+    for (j = 0; j < 6; j++) {
       D[i][j] = pow((pow((X[n + j - 6][0] - X[i][1]), 2) + pow((X[n + j - 6][1] - X[i][2]), 2)), 0.5);
     }
-    for (j = 6; j < 11; j++){
+    for (j = 6; j < 11; j++) {
       D[i][j] = pow((pow((X[j - 5][0] - X[i][1]), 2) + pow((X[j - 5][1] - X[i][2]), 2)), 0.5); //consider changing 5 to 6
-    } 
+    }
   }
-  
-  for (i = 5; i < (n - 5); i++){
-    for (j=0; j<11; j++){
-      D[i][j] = pow((pow((X[i + j - 6][0] - X[i][1]), 2) + pow((X[i + j - 6][1] - X[i][2]), 2)), 0.5);
-    } 
-  }
-  for (i = (n - 5); i < n; i++){
-    for (j=0; j<6; j++){
+
+  for (i = 5; i < (n - 5); i++) {
+    for (j = 0; j < 11; j++) {
       D[i][j] = pow((pow((X[i + j - 6][0] - X[i][1]), 2) + pow((X[i + j - 6][1] - X[i][2]), 2)), 0.5);
     }
-    for (j = 6; j < 11; j++){
-      D[i][j] = pow((pow((X[j - 6][0] - X[i][1]), 2) + pow((X[j - 6][1] - X[i][2]), 2)), 0.5); //consider changing 5 to 6
-    } 
   }
-    
+  for (i = (n - 5); i < n; i++) {
+    for (j = 0; j < 6; j++) {
+      D[i][j] = pow((pow((X[i + j - 6][0] - X[i][1]), 2) + pow((X[i + j - 6][1] - X[i][2]), 2)), 0.5);
+    }
+    for (j = 6; j < 11; j++) {
+      D[i][j] = pow((pow((X[j - 6][0] - X[i][1]), 2) + pow((X[j - 6][1] - X[i][2]), 2)), 0.5); //consider changing 5 to 6
+    }
+  }
+
 
   visited = false(n, 1); ////////////////
   isnoise = false(n, 1); ///////////////
@@ -238,11 +238,11 @@ void ExpandCluster(i, Neighbors, C, n)////////////////
 
   k = 1;
   while true
-  {
-    if (((Neighbors[k] + i - 6) >= 0) && ((Neighbors[k] + i - 6) < n)){
+{
+  if (((Neighbors[k] + i - 6) >= 0) && ((Neighbors[k] + i - 6) < n)) {
       j = Neighbors[k] + i - 6;
     }
-    else if (((Neighbors[k] + i - 6) >= n)){
+    else if (((Neighbors[k] + i - 6) >= n)) {
       j = Neighbors[k] + i - 6 - n;
     }
     else {
@@ -253,6 +253,19 @@ void ExpandCluster(i, Neighbors, C, n)////////////////
     {
       visited[j] = true;
       Neighbors2 = RegionQuery(j);///////////////
+
+      for (for ctr_n = 0; ctr_n < length(Neighbors2); ctr_n++){
+        if ((Neighbors2[ctr_n] + (j - i)) < 0){
+          Neighbors2[ctr_n] = Neighbors2[ctr_n] + (j - i) + n;
+        }
+        else if ((Neighbors2[ctr_n] + (j - i)) >= n){
+          Neighbors2[ctr_n] = Neighbors2[ctr_n] + (j - i) - n;
+        }
+        else{
+          Neighbors2[ctr_n] = Neighbors2[ctr_n] + (j - i);
+        }
+      }
+
       if numel(Neighbors2) >= MinPts//////////////////////
       {
         Neighbors = [Neighbors Neighbors2]; //#ok//////////////
