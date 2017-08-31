@@ -112,6 +112,10 @@ void reset_Sweep()
   Serial.println("\n\nWhenever you are ready, type \"start\" to to begin the sequence...");
 }
 
+/////////////////////////////////////////////////////////
+////////////////  DBSCAN MAIN ////////////////////////////////
+/////////////////////////////////////////////////////////
+
 void DBSCAN_Main()
 {
   int Angle[] = Matrix with angle data;
@@ -172,6 +176,10 @@ void DBSCAN_Main()
 
 }
 
+/////////////////////////////////////////////////////////
+////////////////  DBSCAN ////////////////////////////////
+/////////////////////////////////////////////////////////
+
 int DBSCAN()///////////////
 {
   int C = 0;
@@ -214,8 +222,8 @@ int DBSCAN()///////////////
     {
       visited[i] = true;
 
-      Neighbors_ctr = RegionQuery(Neighbors, D[don't know][10]);
-      if Neighbors_ctr < MinPts//////////////////
+      Neighbors_ctr = RegionQuery(Neighbors, D);//////////////
+      if Neighbors_ctr < MinPts
       {
         // X(i,:) is NOISE
         isnoise[i] = true;
@@ -231,29 +239,57 @@ int DBSCAN()///////////////
   }
 
 }
+/////////////////////////////////////////////////////////
+////////////////  EXPAND CLUSTER /////////////////////////
+/////////////////////////////////////////////////////////
 
 void ExpandCluster(i, Neighbors, C, n)////////////////
 {
   IDX[i] = C;
 
+  //////////// Experimental algorithm /////////////
+  s = size(Neighbors); ///////////////
+  int New_Neighbor[s] = {0};
+  for (ctr = 0; ctr < s; ctr++){
+    New_Neighbor[ctr] = Neighbors[ctr];
+  }
+  int Temp_N[s] = {0};
+  for (ctr = 0; ctr < s; ctr++){
+    Temp_N[ctr] = Neighbors[ctr];
+  }
+  int Neighbors2_Temp[11] = {0};
+  ///////////////////////////////////////////////
   k = 1;
   while true
 {
-  if (((Neighbors[k] + i - 6) >= 0) && ((Neighbors[k] + i - 6) < n)) {
-      j = Neighbors[k] + i - 6;
+/////////////// Try to find a way to change to fixed array instead of dynamic////////////
+  delete [] New_N; //// C++ stuff, see if this is correct
+  New_N = new int [s];
+  for (ctr = 0; ctr < s; ctr++){
+    New_N[ctr] = Temp_N[ctr];
+  }
+
+  
+  if (((Temp_N[k] + i - 6) >= 0) && ((Temp_N[k] + i - 6) < n)) {
+      j = Temp_N[k] + i - 6;
     }
-    else if (((Neighbors[k] + i - 6) >= n)) {
-      j = Neighbors[k] + i - 6 - n;
+    else if (((Temp_N[k] + i - 6) >= n)) {
+      j = Temp_N[k] + i - 6 - n;
     }
     else {
-      j = j = Neighbors[k] + i - 6 + n;
+      j = Temp_N[k] + i - 6 + n;
     }
 
     if !visited[j]
     {
       visited[j] = true;
-      Neighbors2_ctr = RegionQuery(Neighbors2, D[don't know][10]);///////////////
-
+      Neighbors2_ctr = RegionQuery(Neighbors2_Temp, D);
+      delete [] Neighbors2;
+      Neighbors2 = new int [Neighbors2_ctr];
+      for (ctr_n = 0; ctr_n < Neighbors2_ctr){
+        Neighbors2[ctr_n] = Neighbors2_Temp[ctr_n];
+      }
+    
       for (int ctr_n = 0; ctr_n < Neighbors2_ctr; ctr_n++){
         if ((Neighbors2[ctr_n] + (j - i)) < 0){
           Neighbors2[ctr_n] = Neighbors2[ctr_n] + (j - i) + n;
@@ -265,26 +301,39 @@ void ExpandCluster(i, Neighbors, C, n)////////////////
           Neighbors2[ctr_n] = Neighbors2[ctr_n] + (j - i);
         }
       }
-
-      if length(Neighbors2) >= MinPts//////////////////////
+      
+      if Neighbors2_ctr >= MinPts
       {
-        Neighbors = [Neighbors Neighbors2]; //#ok//////////////
+        delete [] Temp_N;
+        Temp_N = new int [Neighbors2_ctr + s];
+        for (ctr = 0; ctr < s; ctr++){
+          Temp_N[ctr] = New_N[ctr];
+        }
+        for (ctr = s; ctr < (Neighbors2_ctr + s); ctr++){
+          Temp_N[ctr] = Neighbors2[ctr];
+        }
+        s = Neighbors2_ctr + s;
+        ////Neighbors = [Neighbors Neighbors2]; //#ok//////////////
       }
+
     }
     if IDX[j] == 0
     {
       IDX[j] = C;
     }
-
     k++;
-    if k > length(Neighbors)////////////
+    if k > s 
     {
       break;
     }
   }
 }
 
-int RegionQuery(int Neighbors[], int D[don't know][10])
+/////////////////////////////////////////////////////////
+////////////////  Region Query /////////////////////////
+/////////////////////////////////////////////////////////
+
+int RegionQuery(int Neighbors[], int D[][10])
 {
   k = 0;
   for (j = 0; j < 11; i++){
