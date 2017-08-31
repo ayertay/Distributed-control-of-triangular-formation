@@ -214,8 +214,8 @@ int DBSCAN()///////////////
     {
       visited[i] = true;
 
-      Neighbors = RegionQuery(i);
-      if numel(Neighbors) < MinPts//////////////////
+      Neighbors_ctr = RegionQuery(Neighbors, D[don't know][10]);
+      if Neighbors_ctr < MinPts//////////////////
       {
         // X(i,:) is NOISE
         isnoise[i] = true;
@@ -223,7 +223,7 @@ int DBSCAN()///////////////
       else
       {
         C++;
-        ExpandCluster(i, Neighbors, C);
+        ExpandCluster(i, Neighbors, C); //can be changed to array that contains Neighbors
       }
 
     }
@@ -252,9 +252,9 @@ void ExpandCluster(i, Neighbors, C, n)////////////////
     if !visited[j]
     {
       visited[j] = true;
-      Neighbors2 = RegionQuery(j);///////////////
+      Neighbors2_ctr = RegionQuery(Neighbors2, D[don't know][10]);///////////////
 
-      for (for ctr_n = 0; ctr_n < length(Neighbors2); ctr_n++){
+      for (int ctr_n = 0; ctr_n < Neighbors2_ctr; ctr_n++){
         if ((Neighbors2[ctr_n] + (j - i)) < 0){
           Neighbors2[ctr_n] = Neighbors2[ctr_n] + (j - i) + n;
         }
@@ -266,7 +266,7 @@ void ExpandCluster(i, Neighbors, C, n)////////////////
         }
       }
 
-      if numel(Neighbors2) >= MinPts//////////////////////
+      if length(Neighbors2) >= MinPts//////////////////////
       {
         Neighbors = [Neighbors Neighbors2]; //#ok//////////////
       }
@@ -277,16 +277,24 @@ void ExpandCluster(i, Neighbors, C, n)////////////////
     }
 
     k++;
-    if k > numel(Neighbors)////////////
+    if k > length(Neighbors)////////////
     {
       break;
     }
   }
 }
 
-void Neighbors = RegionQuery(i)
+int RegionQuery(int Neighbors[], int D[don't know][10])
 {
-  Neighbors = find(D(i, : ) <= epsilon);
+  k = 0;
+  for (j = 0; j < 11; i++){
+    if (D[i][j] <= epsilon){
+      Neighbors[k] = D[i][j];
+      k++;
+    }
+     
+  }
+  return k;
 }
 
 
