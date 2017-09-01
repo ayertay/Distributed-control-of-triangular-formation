@@ -186,7 +186,7 @@ int DBSCAN()///////////////
 
   n = size(X, 1);///////////////
 
-  IDX = zeros(n, 1);//////////////
+  int IDX[n] = {0};
 
   //D = pdist2(X, X);
   for (i = 0; i < 5; i++) {
@@ -213,25 +213,25 @@ int DBSCAN()///////////////
   }
 
 
-  visited = false(n, 1); ////////////////
-  isnoise = false(n, 1); ///////////////
+  int visited[n] = {0};
+  int isnoise[n] = {0};
 
   for (int i = 0; i < n; i++)
   {
     if !visited[i]
     {
-      visited[i] = true;
+      visited[i] = 1;
 
       Neighbors_ctr = RegionQuery(Neighbors, D);//////////////
       if Neighbors_ctr < MinPts
       {
         // X(i,:) is NOISE
-        isnoise[i] = true;
+        isnoise[i] = 1;
       }
       else
       {
         C++;
-        ExpandCluster(i, Neighbors, C); //can be changed to array that contains Neighbors
+        ExpandCluster(i, Neighbors, s, C, n); //can be changed to array that contains Neighbors
       }
 
     }
@@ -243,7 +243,7 @@ int DBSCAN()///////////////
 ////////////////  EXPAND CLUSTER /////////////////////////
 /////////////////////////////////////////////////////////
 
-void ExpandCluster(i, Neighbors, C, n)////////////////
+void ExpandCluster(int i, int Neighbors[], int s, int C, int n)////////////////
 {
   IDX[i] = C;
 
@@ -345,5 +345,4 @@ int RegionQuery(int Neighbors[], int D[][10])
   }
   return k;
 }
-
 
