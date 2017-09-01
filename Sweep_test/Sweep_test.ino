@@ -116,7 +116,7 @@ void reset_Sweep()
 ////////////////  DBSCAN MAIN ////////////////////////////////
 /////////////////////////////////////////////////////////
 
-void DBSCAN_Main()
+void DBSCAN_Main(int Angle[], int Distance[], n)
 {
   int Angle[] = Matrix with angle data;
   int Distance[] = Matrix with distance data;
@@ -181,17 +181,17 @@ void DBSCAN_Main()
 ////////////////  DBSCAN ////////////////////////////////
 /////////////////////////////////////////////////////////
 
-int DBSCAN(X[][2], int n, int epsilon, int MinPts, int IDX[])///////////////
+int DBSCAN(float X[][2], int n, int epsilon, int MinPts, int IDX[])///////////////
 {
   int C = 0;
-
+  float D[n][10] = {0};
   //D = pdist2(X, X);
   for (i = 0; i < 5; i++) {
     for (j = 0; j < 6; j++) {
       D[i][j] = pow((pow((X[n + j - 6][0] - X[i][1]), 2) + pow((X[n + j - 6][1] - X[i][2]), 2)), 0.5);
     }
     for (j = 6; j < 11; j++) {
-      D[i][j] = pow((pow((X[j - 5][0] - X[i][1]), 2) + pow((X[j - 5][1] - X[i][2]), 2)), 0.5); //consider changing 5 to 6
+      D[i][j] = pow((pow((X[j - 6][0] - X[i][1]), 2) + pow((X[j - 6][1] - X[i][2]), 2)), 0.5); //consider changing 5 to 6
     }
   }
 
@@ -212,14 +212,23 @@ int DBSCAN(X[][2], int n, int epsilon, int MinPts, int IDX[])///////////////
 
   int visited[n] = {0};
   int isnoise[n] = {0};
+  int Neighbors[10] = {0};
+  int Neighbors_Temp[10] = {0};
 
   for (int i = 0; i < n; i++)
   {
     if !visited[i]
     {
       visited[i] = 1;
-
-      Neighbors_ctr = RegionQuery(Neighbors, D);//////////////
+      
+      Neighbors_ctr = RegionQuery(Neighbors_Temp, D);
+      delete [] Neighbors;
+      Neighbors = new int [Neighbors_ctr];
+      for (int ctr= 0; ctr < Neighbors_ctr; ctr++)
+      {
+        Neighbors[ctr] = Neighbors_Temp[ctr];
+      }
+      
       if Neighbors_ctr < MinPts
       {
         // X(i,:) is NOISE
@@ -255,7 +264,8 @@ void ExpandCluster(int i, int Neighbors[], int s, int C, int n)////////////////
   for (ctr = 0; ctr < s; ctr++){
     Temp_N[ctr] = Neighbors[ctr];
   }
-  int Neighbors2_Temp[11] = {0};
+  int Neighbors2[10] = {0};
+  int Neighbors2_Temp[10] = {0};
   ///////////////////////////////////////////////
   k = 1;
   while true
