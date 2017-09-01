@@ -28,6 +28,8 @@
 */
 
 #include <Sweep.h>
+int epsilon = 10;
+int MinPts = 2;
 
 // Create a Sweep device using Serial #1 (RX1 & TX1)
 Sweep device(Serial1);
@@ -97,6 +99,7 @@ void loop()
     }
     Serial.println("Angle: " + String(angles[i], 3) + ", Distance: " + String(distances[i]) + ", Signal Strength: " + String(signalStrengths[i]));
   }
+  DBSCAN_Main(angles, distances, sampleCount)
   reset_Sweep();
 }
 
@@ -116,12 +119,10 @@ void reset_Sweep()
 ////////////////  DBSCAN MAIN ////////////////////////////////
 /////////////////////////////////////////////////////////
 
-void DBSCAN_Main(int Angle[], int Distance[], n)
+void DBSCAN_Main(int Angle[], int Distance[], int n)
 {
-  int Angle[] = Matrix with angle data;
-  int Distance[] = Matrix with distance data;
-
-  float X[][2];
+  float X[n][2];
+  int IDX_Max = 0; //Maximum value in IDX
   for (int i = 0; i < n; i++) {
     X[i][1] = cos(Angle[i] * PI / 180) * Distance[i];
     X[i][2] = sin(Angle[i] * PI / 180) * Distance[i];
@@ -141,14 +142,14 @@ void DBSCAN_Main(int Angle[], int Distance[], n)
 
   // Run DBSCAN Clustering Algorithm
 
-  int epsilon = 10;
-  int MinPts = 2;
+//  int epsilon = 10;
+//  int MinPts = 2;
   int IDX[n] = {0};
   IDX_Max = DBSCAN(X, n, epsilon, MinPts, IDX); //DBSCAN function
 
   // Taking out clusters with more than 9 points
   float avg_dist[IDX_Max] = {0};
-  for (i = IDX_Max - 1; i >= 0; i--)
+  for (int i = IDX_Max - 1; i >= 0; i--)
   {
     int k = 0;
     for (int j = 0; j < length(IDX); i++)
@@ -184,24 +185,25 @@ void DBSCAN_Main(int Angle[], int Distance[], n)
 int DBSCAN(float X[][2], int n, int epsilon, int MinPts, int IDX[])///////////////
 {
   int C = 0;
+  int IDX_Max = 0; //Maximum value in IDX
   float D[n][10] = {0};
   //D = pdist2(X, X);
-  for (i = 0; i < 5; i++) {
-    for (j = 0; j < 6; j++) {
+  for (int i = 0; i < 5; i++) {
+    for (int j = 0; j < 6; j++) {
       D[i][j] = pow((pow((X[n + j - 6][0] - X[i][1]), 2) + pow((X[n + j - 6][1] - X[i][2]), 2)), 0.5);
     }
-    for (j = 6; j < 11; j++) {
+    for (int j = 6; j < 11; j++) {
       D[i][j] = pow((pow((X[j - 6][0] - X[i][1]), 2) + pow((X[j - 6][1] - X[i][2]), 2)), 0.5); //consider changing 5 to 6
     }
   }
 
-  for (i = 5; i < (n - 5); i++) {
-    for (j = 0; j < 11; j++) {
+  for (int i = 5; i < (n - 5); i++) {
+    for (int j = 0; j < 11; j++) {
       D[i][j] = pow((pow((X[i + j - 6][0] - X[i][1]), 2) + pow((X[i + j - 6][1] - X[i][2]), 2)), 0.5);
     }
   }
-  for (i = (n - 5); i < n; i++) {
-    for (j = 0; j < 6; j++) {
+  for (int i = (n - 5); i < n; i++) {
+    for (int j = 0; j < 6; j++) {
       D[i][j] = pow((pow((X[i + j - 6][0] - X[i][1]), 2) + pow((X[i + j - 6][1] - X[i][2]), 2)), 0.5);
     }
     for (j = 6; j < 11; j++) {
@@ -214,14 +216,15 @@ int DBSCAN(float X[][2], int n, int epsilon, int MinPts, int IDX[])/////////////
   int isnoise[n] = {0};
   int Neighbors[10] = {0};
   int Neighbors_Temp[10] = {0};
+  int Neighbors_ctr = 0;
 
   for (int i = 0; i < n; i++)
   {
-    if !visited[i]
+    if (!visited[i])
     {
       visited[i] = 1;
       
-      Neighbors_ctr = RegionQuery(Neighbors_Temp, D);
+      Neighbors_ctr = RegionQuery(Neighbors_Temp, D, i);
       delete [] Neighbors;
       Neighbors = new int [Neighbors_ctr];
       for (int ctr= 0; ctr < Neighbors_ctr; ctr++)
@@ -229,7 +232,7 @@ int DBSCAN(float X[][2], int n, int epsilon, int MinPts, int IDX[])/////////////
         Neighbors[ctr] = Neighbors_Temp[ctr];
       }
       
-      if Neighbors_ctr < MinPts
+      if (Neighbors_ctr < MinPts)
       {
         // X(i,:) is NOISE
         isnoise[i] = 1;
@@ -237,7 +240,7 @@ int DBSCAN(float X[][2], int n, int epsilon, int MinPts, int IDX[])/////////////
       else
       {
         C++;
-        ExpandCluster(i, Neighbors, s, C, n); //can be changed to array that contains Neighbors
+        ExpandCluster(i, Neighbors, Neighbors_ctr, C, n, D); //can be changed to array that contains Neighbors
       }
 
     }
@@ -250,31 +253,32 @@ int DBSCAN(float X[][2], int n, int epsilon, int MinPts, int IDX[])/////////////
 ////////////////  EXPAND CLUSTER /////////////////////////
 /////////////////////////////////////////////////////////
 
-void ExpandCluster(int i, int Neighbors[], int s, int C, int n)////////////////
+void ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][10])////////////////
 {
   IDX[i] = C;
+  int Neighbors2_ctr = 0;
 
   //////////// Experimental algorithm /////////////
-  s = size(Neighbors); ///////////////
   int New_Neighbor[s] = {0};
-  for (ctr = 0; ctr < s; ctr++){
+  for (int ctr = 0; ctr < s; ctr++){
     New_Neighbor[ctr] = Neighbors[ctr];
   }
   int Temp_N[s] = {0};
-  for (ctr = 0; ctr < s; ctr++){
+  for (int ctr = 0; ctr < s; ctr++){
     Temp_N[ctr] = Neighbors[ctr];
   }
   int Neighbors2[10] = {0};
   int Neighbors2_Temp[10] = {0};
   ///////////////////////////////////////////////
-  k = 1;
-  while true
+  int k = 1;
+  int j = 0;
+  while (true)
 {
 /////////////// Try to find a way to change to fixed array instead of dynamic////////////
-  delete [] New_N; //// C++ stuff, see if this is correct
-  New_N = new int [s];
-  for (ctr = 0; ctr < s; ctr++){
-    New_N[ctr] = Temp_N[ctr];
+  delete [] New_Neighbor; //// C++ stuff, see if this is correct
+  New_Neighbor = new int [s];
+  for (int ctr = 0; ctr < s; ctr++){
+    New_Neighbor[ctr] = Temp_N[ctr];
   }
 
   
@@ -288,13 +292,13 @@ void ExpandCluster(int i, int Neighbors[], int s, int C, int n)////////////////
       j = Temp_N[k] + i - 6 + n;
     }
 
-    if !visited[j]
+    if (!visited[j])
     {
       visited[j] = true;
-      Neighbors2_ctr = RegionQuery(Neighbors2_Temp, D);
+      Neighbors2_ctr = RegionQuery(Neighbors2_Temp, D, i);
       delete [] Neighbors2;
       Neighbors2 = new int [Neighbors2_ctr];
-      for (ctr_n = 0; ctr_n < Neighbors2_ctr){
+      for (int ctr_n = 0; ctr_n < Neighbors2_ctr; ctr_n++){
         Neighbors2[ctr_n] = Neighbors2_Temp[ctr_n];
       }
     
@@ -310,14 +314,14 @@ void ExpandCluster(int i, int Neighbors[], int s, int C, int n)////////////////
         }
       }
       
-      if Neighbors2_ctr >= MinPts
+      if (Neighbors2_ctr >= MinPts)
       {
         delete [] Temp_N;
         Temp_N = new int [Neighbors2_ctr + s];
-        for (ctr = 0; ctr < s; ctr++){
-          Temp_N[ctr] = New_N[ctr];
+        for (int ctr = 0; ctr < s; ctr++){
+          Temp_N[ctr] = New_Neighbor[ctr];
         }
-        for (ctr = s; ctr < (Neighbors2_ctr + s); ctr++){
+        for (int ctr = s; ctr < (Neighbors2_ctr + s); ctr++){
           Temp_N[ctr] = Neighbors2[ctr];
         }
         s = Neighbors2_ctr + s;
@@ -325,12 +329,12 @@ void ExpandCluster(int i, int Neighbors[], int s, int C, int n)////////////////
       }
 
     }
-    if IDX[j] == 0
+    if (IDX[j] == 0)
     {
       IDX[j] = C;
     }
     k++;
-    if k > s 
+    if (k > s)
     {
       break;
     }
@@ -341,10 +345,10 @@ void ExpandCluster(int i, int Neighbors[], int s, int C, int n)////////////////
 ////////////////  Region Query /////////////////////////
 /////////////////////////////////////////////////////////
 
-int RegionQuery(int Neighbors[], int D[][10])
+int RegionQuery(int Neighbors[], int D[][10], int i)
 {
-  k = 0;
-  for (j = 0; j < 11; i++){
+  int k = 0;
+  for (int j = 0; j < 10; j++){
     if (D[i][j] <= epsilon){
       Neighbors[k] = D[i][j];
       k++;
