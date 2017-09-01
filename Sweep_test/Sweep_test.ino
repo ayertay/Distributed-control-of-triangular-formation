@@ -122,7 +122,7 @@ void DBSCAN_Main()
   int Distance[] = Matrix with distance data;
 
   float X[][2];
-  for (int i = 0; i < Y; i++) {
+  for (int i = 0; i < n; i++) {
     X[i][1] = cos(Angle[i] * PI / 180) * Distance[i];
     X[i][2] = sin(Angle[i] * PI / 180) * Distance[i];
   }
@@ -130,7 +130,7 @@ void DBSCAN_Main()
   /************** Filters *********************/
 
   // Max distance = 300 cm
-  for (int i = 0; i < Y; i++)
+  for (int i = 0; i < n; i++)
   {
     if  (pow((pow((X[i][1]), 2) + pow((X[i][2]), 2)), 0.5) > 300)
     {
@@ -143,11 +143,12 @@ void DBSCAN_Main()
 
   int epsilon = 10;
   int MinPts = 2;
-  IDX = DBSCAN(X, epsilon, MinPts); //DBSCAN function
+  int IDX[n] = {0};
+  IDX_Max = DBSCAN(X, n, epsilon, MinPts, IDX); //DBSCAN function
 
   // Taking out clusters with more than 9 points
-  float avg_dist = zeros(max(IDX), 1);
-  for (i = max(IDX) - 1; i >= 0; i--)
+  float avg_dist[IDX_Max] = {0};
+  for (i = IDX_Max - 1; i >= 0; i--)
   {
     int k = 0;
     for (int j = 0; j < length(IDX); i++)
@@ -180,13 +181,9 @@ void DBSCAN_Main()
 ////////////////  DBSCAN ////////////////////////////////
 /////////////////////////////////////////////////////////
 
-int DBSCAN()///////////////
+int DBSCAN(X[][2], int n, int epsilon, int MinPts, int IDX[])///////////////
 {
   int C = 0;
-
-  n = size(X, 1);///////////////
-
-  int IDX[n] = {0};
 
   //D = pdist2(X, X);
   for (i = 0; i < 5; i++) {
@@ -238,6 +235,7 @@ int DBSCAN()///////////////
 
   }
 
+  return IDX_Max;
 }
 /////////////////////////////////////////////////////////
 ////////////////  EXPAND CLUSTER /////////////////////////
