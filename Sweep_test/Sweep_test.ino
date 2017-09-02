@@ -99,7 +99,7 @@ void loop()
     }
     Serial.println("Angle: " + String(angles[i], 3) + ", Distance: " + String(distances[i]) + ", Signal Strength: " + String(signalStrengths[i]));
   }
-  DBSCAN_Main(angles, distances, sampleCount)
+  DBSCAN_Main(angles, distances, sampleCount);
   reset_Sweep();
 }
 
@@ -119,7 +119,7 @@ void reset_Sweep()
 ////////////////  DBSCAN MAIN ////////////////////////////////
 /////////////////////////////////////////////////////////
 
-void DBSCAN_Main(int Angle[], int Distance[], int n)
+void DBSCAN_Main(float Angle[], int Distance[], int n)
 {
   float X[n][2];
   int IDX_Max = 0; //Maximum value in IDX
@@ -157,7 +157,7 @@ void DBSCAN_Main(int Angle[], int Distance[], int n)
       if (IDX[j] == i)
       {
         k++;
-        avg_dist[i] = pow((pow((X[j][1]), 2) + pow((X[j][2]), 2)), 0.5 + avg_dist[i];
+        avg_dist[i] = pow((pow((X[j][1]), 2) + pow((X[j][2]), 2)), 0.5 + avg_dist[i]);
       }
     }
     avg_dist[i] = avg_dist[i] / k;
@@ -206,15 +206,21 @@ int DBSCAN(float X[][2], int n, int epsilon, int MinPts, int IDX[])/////////////
     for (int j = 0; j < 6; j++) {
       D[i][j] = pow((pow((X[i + j - 6][0] - X[i][1]), 2) + pow((X[i + j - 6][1] - X[i][2]), 2)), 0.5);
     }
-    for (j = 6; j < 11; j++) {
+    for (int j = 6; j < 11; j++) {
       D[i][j] = pow((pow((X[j - 6][0] - X[i][1]), 2) + pow((X[j - 6][1] - X[i][2]), 2)), 0.5); //consider changing 5 to 6
     }
   }
 
 
-  int visited[n] = {0};
+  int visited[n] = {0};//// also dynamic
   int isnoise[n] = {0};
-  int Neighbors[10] = {0};
+  
+  int* Neighbors = 0;
+  if (Neighbors != 0) {
+    delete [] Neighbors;
+  }
+  Neighbors = new int [10];
+  
   int Neighbors_Temp[10] = {0};
   int Neighbors_ctr = 0;
 
@@ -240,7 +246,7 @@ int DBSCAN(float X[][2], int n, int epsilon, int MinPts, int IDX[])/////////////
       else
       {
         C++;
-        ExpandCluster(i, Neighbors, Neighbors_ctr, C, n, D); //can be changed to array that contains Neighbors
+        ExpandCluster(i, Neighbors, Neighbors_ctr, C, n, D, IDX, visited); //can be changed to array that contains Neighbors
       }
 
     }
@@ -253,21 +259,37 @@ int DBSCAN(float X[][2], int n, int epsilon, int MinPts, int IDX[])/////////////
 ////////////////  EXPAND CLUSTER /////////////////////////
 /////////////////////////////////////////////////////////
 
-void ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][10])////////////////
+void ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][10], int IDX[], int visited[])////////////////
 {
   IDX[i] = C;
   int Neighbors2_ctr = 0;
 
   //////////// Experimental algorithm /////////////
-  int New_Neighbor[s] = {0};
+  int* New_Neighbor = 0;
+  if (New_Neighbor != 0) {
+    delete [] New_Neighbor;
+  }
+  New_Neighbor = new int [s];
+  
   for (int ctr = 0; ctr < s; ctr++){
     New_Neighbor[ctr] = Neighbors[ctr];
   }
-  int Temp_N[s] = {0};
+  
+  int* Temp_N = 0;
+  if (Temp_N != 0) {
+    delete [] Temp_N;
+  }
+  Temp_N = new int [s];
+  
   for (int ctr = 0; ctr < s; ctr++){
     Temp_N[ctr] = Neighbors[ctr];
   }
-  int Neighbors2[10] = {0};
+  int* Neighbors2 = 0;
+  if (Neighbors2 != 0) {
+    delete [] Neighbors2;
+  }
+  Neighbors2 = new int [10];
+  //int Neighbors2[10] = {0};
   int Neighbors2_Temp[10] = {0};
   ///////////////////////////////////////////////
   int k = 1;
@@ -345,7 +367,7 @@ void ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][10])//
 ////////////////  Region Query /////////////////////////
 /////////////////////////////////////////////////////////
 
-int RegionQuery(int Neighbors[], int D[][10], int i)
+int RegionQuery(int Neighbors[], float D[][10], int i)
 {
   int k = 0;
   for (int j = 0; j < 10; j++){
