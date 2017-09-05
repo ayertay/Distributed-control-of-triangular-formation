@@ -37,15 +37,15 @@ Sweep device(Serial1);
 ScanPacket reading;
 
 // keeps track of how many scans have been collected
-uint8_t scanCount = 0;
+int scanCount = 0;
 // keeps track of how many samples have been collected
-uint16_t sampleCount = 0;
+int sampleCount = 0;
 
 // Arrays to store attributes of collected scans
 bool syncValues[1000];         // 1 -> first reading of new scan, 0 otherwise
 float angles[1000];            // in degrees (accurate to the millidegree)
-uint16_t distances[1000];      // in cm
-uint8_t signalStrengths[1000]; // 0:255, higher is better
+int distances[1000];      // in cm
+int signalStrengths[1000]; // 0:255, higher is better
 
 
 
@@ -144,11 +144,19 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
 
 //  int epsilon = 10;
 //  int MinPts = 2;
-  int IDX[n] = {0};
+  int* IDX = 0;
+  if (IDX != 0) {
+    delete [] IDX;
+  }
+  IDX = new int [n];
   IDX_Max = DBSCAN(X, n, epsilon, MinPts, IDX); //DBSCAN function
 
   // Taking out clusters with more than 9 points
-  float avg_dist[IDX_Max] = {0};
+  float* avg_dist = 0;
+  if (avg_dist != 0) {
+    delete [] avg_dist;
+  }
+  avg_dist = new float [IDX_Max];
   for (int i = IDX_Max - 1; i >= 0; i--)
   {
     int k = 0;
@@ -185,8 +193,16 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
 int DBSCAN(float X[][2], int n, int epsilon, int MinPts, int IDX[])///////////////
 {
   int C = 0;
+  
   int IDX_Max = 0; //Maximum value in IDX
-  float D[n][10] = {0};
+  float D[n][10];
+
+  for (int i = 0; i < n; i++){
+    for (int j = 0; j < 10; j++){
+      D[i][j] = 0;
+    }
+  }
+  
   //D = pdist2(X, X);
   for (int i = 0; i < 5; i++) {
     for (int j = 0; j < 6; j++) {
@@ -212,8 +228,18 @@ int DBSCAN(float X[][2], int n, int epsilon, int MinPts, int IDX[])/////////////
   }
 
 
-  int visited[n] = {0};//// also dynamic
-  int isnoise[n] = {0};
+  //int visited[n] = {0};//// also dynamic
+  int* visited = 0;
+  if (visited != 0) {
+    delete [] visited;
+  }
+  visited = new int [n];
+  
+  int* isnoise = 0;
+  if (isnoise != 0) {
+    delete [] isnoise;
+  }
+  isnoise = new int [n];
   
   int* Neighbors = 0;
   if (Neighbors != 0) {
