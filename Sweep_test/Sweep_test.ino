@@ -85,21 +85,37 @@ void loop()
 
 
   int indexOfFirstSyncReading = 0;
+  int new_scan_ctr = 0;
+  int matrix_size = 0;
   // don't print the trailing readings from the first partial scan
   while (!syncValues[indexOfFirstSyncReading])
   {
     indexOfFirstSyncReading++;
   }
   // print the readings for all the complete scans
+  Serial.print("Index of first reading: ");
+  Serial.println(indexOfFirstSyncReading);
   for (int i = indexOfFirstSyncReading; i < sampleCount; i++)
   {
     if (syncValues[i])
     {
+      new_scan_ctr++;
+      if(new_scan_ctr == 2){
+        matrix_size = i - indexOfFirstSyncReading;
+        Serial.println(matrix_size);
+      }
       Serial.println("\n----------------------NEW SCAN----------------------");
     }
     Serial.println("Angle: " + String(angles[i], 3) + ", Distance: " + String(distances[i]) + ", Signal Strength: " + String(signalStrengths[i]));
   }
-  DBSCAN_Main(angles, distances, sampleCount);
+  float angles_new[500] = {0};            // in degrees (accurate to the millidegree)
+  int distances_new[500] = {0};      // in cm
+  for (int i = indexOfFirstSyncReading; i < (matrix_size + indexOfFirstSyncReading); i++)
+  {
+    angles_new[i - indexOfFirstSyncReading] = angles[i];
+    distances_new[i - indexOfFirstSyncReading] = distances[i];
+  }
+  DBSCAN_Main(angles_new, distances_new, matrix_size);
   reset_Sweep();
 }
 
@@ -113,6 +129,8 @@ void reset_Sweep()
   delay(50);
   Serial.flush();
   Serial.println("\n\nWhenever you are ready, type \"start\" to to begin the sequence...");
+  delay(1000);
+  Serial.write("start");
 }
 
 /////////////////////////////////////////////////////////
@@ -121,11 +139,12 @@ void reset_Sweep()
 
 void DBSCAN_Main(float Angle[], int Distance[], int n)
 {
-  float X[n][2];
+  
+  float X[600][2];
   int IDX_Max = 0; //Maximum value in IDX
   for (int i = 0; i < n; i++) {
-    X[i][1] = cos(Angle[i] * PI / 180) * Distance[i];
-    X[i][2] = sin(Angle[i] * PI / 180) * Distance[i];
+    X[i][0] = cos(Angle[i] * PI / 180) * Distance[i];
+    X[i][1] = sin(Angle[i] * PI / 180) * Distance[i];
   }
 
   /************** Filters *********************/
@@ -133,10 +152,10 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
   // Max distance = 300 cm
   for (int i = 0; i < n; i++)
   {
-    if  (pow((pow((X[i][1]), 2) + pow((X[i][2]), 2)), 0.5) > 300)
+    if  ((pow((pow((X[i][0]), 2) + pow((X[i][1]), 2)), 0.5) > 300) && (pow((pow((X[i][0]), 2) + pow((X[i][1]), 2)), 0.5) < 5))
     {
+      X[i][0] = 0;
       X[i][1] = 0;
-      X[i][2] = 0;
     }
   }
 
@@ -144,23 +163,17 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
 
 //  int epsilon = 10;
 //  int MinPts = 2;
-  int* IDX = 0;
-  if (IDX != 0) {
-    delete [] IDX;
-  }
-  IDX = new int [n];
+  int IDX[600] = {0};
+  
   IDX_Max = DBSCAN(X, n, epsilon, MinPts, IDX); //DBSCAN function
-
+  Serial.println(IDX_Max);
   // Taking out clusters with more than 9 points
-  float* avg_dist = 0;
-  if (avg_dist != 0) {
-    delete [] avg_dist;
-  }
-  avg_dist = new float [IDX_Max];
-  for (int i = IDX_Max - 1; i >= 0; i--)
+  /*float avg_dist[100] = {0};
+  
+  for (int i = 30 - 1; i >= 0; i--)
   {
     int k = 0;
-    for (int j = 0; j < length(IDX); i++)
+    for (int j = 0; j < n; i++)
     {
       if (IDX[j] == i)
       {
@@ -172,9 +185,9 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
     /* k - number of points in cluster, 9 is max at closest distance,
       800 is 200 cm times 4 cluster points at 200 distance (measure
       again) */
-    if ((k > 9) || (k * avg_dist[i] > 800))
+    /*if ((k > 9) || (k * avg_dist[i] > 800))
     {
-      for (int j = 0; j < length(IDX); i++)
+      for (int j = 0; j < n; i++)
       {
         if (IDX[j] == i)
         {
@@ -182,8 +195,13 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
         }
       }
     }
+  }*/
+  Serial.print("Matrix size: ");
+  Serial.println(n);
+  for (int i = 0; i < n; i++){
+    Serial.println("X[1]: " + String(X[i][0]) + ", X[2]: " + String(X[i][1]) + ", IDX: " + String(IDX[i]));
   }
-
+  
 }
 
 /////////////////////////////////////////////////////////
@@ -195,10 +213,10 @@ int DBSCAN(float X[][2], int n, int epsilon, int MinPts, int IDX[])/////////////
   int C = 0;
   
   int IDX_Max = 0; //Maximum value in IDX
-  float D[n][10];
+  float D[600][11];
 
-  for (int i = 0; i < n; i++){
-    for (int j = 0; j < 10; j++){
+  for (int i = 0; i < 600; i++){
+    for (int j = 0; j < 11; j++){
       D[i][j] = 0;
     }
   }
@@ -206,48 +224,35 @@ int DBSCAN(float X[][2], int n, int epsilon, int MinPts, int IDX[])/////////////
   //D = pdist2(X, X);
   for (int i = 0; i < 5; i++) {
     for (int j = 0; j < 6; j++) {
-      D[i][j] = pow((pow((X[n + j - 6][0] - X[i][1]), 2) + pow((X[n + j - 6][1] - X[i][2]), 2)), 0.5);
+      D[i][j] = pow((pow((X[n + j - 5][0] - X[i][0]), 2) + pow((X[n + j - 5][1] - X[i][1]), 2)), 0.5);
     }
     for (int j = 6; j < 11; j++) {
-      D[i][j] = pow((pow((X[j - 6][0] - X[i][1]), 2) + pow((X[j - 6][1] - X[i][2]), 2)), 0.5); //consider changing 5 to 6
+      D[i][j] = pow((pow((X[j - 5][0] - X[i][0]), 2) + pow((X[j - 5][1] - X[i][1]), 2)), 0.5); //consider changing 5 to 6
     }
   }
 
   for (int i = 5; i < (n - 5); i++) {
     for (int j = 0; j < 11; j++) {
-      D[i][j] = pow((pow((X[i + j - 6][0] - X[i][1]), 2) + pow((X[i + j - 6][1] - X[i][2]), 2)), 0.5);
+      D[i][j] = pow((pow((X[i + j - 5][0] - X[i][0]), 2) + pow((X[i + j - 5][1] - X[i][1]), 2)), 0.5);
     }
   }
   for (int i = (n - 5); i < n; i++) {
     for (int j = 0; j < 6; j++) {
-      D[i][j] = pow((pow((X[i + j - 6][0] - X[i][1]), 2) + pow((X[i + j - 6][1] - X[i][2]), 2)), 0.5);
+      D[i][j] = pow((pow((X[i + j - 5][0] - X[i][0]), 2) + pow((X[i + j - 5][1] - X[i][1]), 2)), 0.5);
     }
     for (int j = 6; j < 11; j++) {
-      D[i][j] = pow((pow((X[j - 6][0] - X[i][1]), 2) + pow((X[j - 6][1] - X[i][2]), 2)), 0.5); //consider changing 5 to 6
+      D[i][j] = pow((pow((X[j - 5][0] - X[i][0]), 2) + pow((X[j - 5][1] - X[i][1]), 2)), 0.5); //consider changing 5 to 6
     }
   }
 
 
   //int visited[n] = {0};//// also dynamic
-  int* visited = 0;
-  if (visited != 0) {
-    delete [] visited;
-  }
-  visited = new int [n];
+  int visited[600] = {0};
+  int isnoise[600] = {0};
   
-  int* isnoise = 0;
-  if (isnoise != 0) {
-    delete [] isnoise;
-  }
-  isnoise = new int [n];
+  int Neighbors[100] = {0};
   
-  int* Neighbors = 0;
-  if (Neighbors != 0) {
-    delete [] Neighbors;
-  }
-  Neighbors = new int [10];
-  
-  int Neighbors_Temp[10] = {0};
+  int Neighbors_Temp[11] = {0};
   int Neighbors_ctr = 0;
 
   for (int i = 0; i < n; i++)
@@ -257,8 +262,6 @@ int DBSCAN(float X[][2], int n, int epsilon, int MinPts, int IDX[])/////////////
       visited[i] = 1;
       
       Neighbors_ctr = RegionQuery(Neighbors_Temp, D, i);
-      delete [] Neighbors;
-      Neighbors = new int [Neighbors_ctr];
       for (int ctr= 0; ctr < Neighbors_ctr; ctr++)
       {
         Neighbors[ctr] = Neighbors_Temp[ctr];
@@ -272,80 +275,68 @@ int DBSCAN(float X[][2], int n, int epsilon, int MinPts, int IDX[])/////////////
       else
       {
         C++;
-        ExpandCluster(i, Neighbors, Neighbors_ctr, C, n, D, IDX, visited); //can be changed to array that contains Neighbors
+        IDX_Max = ExpandCluster(i, Neighbors, Neighbors_ctr, C, n, D, IDX, visited); //can be changed to array that contains Neighbors
       }
 
     }
 
   }
-
   return IDX_Max;
 }
 /////////////////////////////////////////////////////////
 ////////////////  EXPAND CLUSTER /////////////////////////
 /////////////////////////////////////////////////////////
 
-void ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][10], int IDX[], int visited[])////////////////
+int ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][11], int IDX[], int visited[])////////////////
 {
   IDX[i] = C;
+  int IDX_Max = 1;
+  if (IDX_Max < C){
+    IDX_Max = C;
+  }
+  
   int Neighbors2_ctr = 0;
 
   //////////// Experimental algorithm /////////////
-  int* New_Neighbor = 0;
-  if (New_Neighbor != 0) {
-    delete [] New_Neighbor;
-  }
-  New_Neighbor = new int [s];
+  int New_Neighbor[100] = {0}; //[s]
+
   
   for (int ctr = 0; ctr < s; ctr++){
     New_Neighbor[ctr] = Neighbors[ctr];
   }
   
-  int* Temp_N = 0;
-  if (Temp_N != 0) {
-    delete [] Temp_N;
-  }
-  Temp_N = new int [s];
+  int Temp_N[100] = {0}; //[s]
   
   for (int ctr = 0; ctr < s; ctr++){
     Temp_N[ctr] = Neighbors[ctr];
   }
-  int* Neighbors2 = 0;
-  if (Neighbors2 != 0) {
-    delete [] Neighbors2;
-  }
-  Neighbors2 = new int [10];
-  //int Neighbors2[10] = {0};
-  int Neighbors2_Temp[10] = {0};
+  int Neighbors2[100] = {0};
+  int Neighbors2_Temp[11] = {0};
   ///////////////////////////////////////////////
-  int k = 1;
+  int k = 0;
   int j = 0;
   while (true)
 {
 /////////////// Try to find a way to change to fixed array instead of dynamic////////////
-  delete [] New_Neighbor; //// C++ stuff, see if this is correct
-  New_Neighbor = new int [s];
   for (int ctr = 0; ctr < s; ctr++){
     New_Neighbor[ctr] = Temp_N[ctr];
   }
 
   
-  if (((Temp_N[k] + i - 6) >= 0) && ((Temp_N[k] + i - 6) < n)) {
-      j = Temp_N[k] + i - 6;
+  if (((Temp_N[k] + i - 5) >= 0) && ((Temp_N[k] + i - 5) < n)) {
+      j = Temp_N[k] + i - 5;
     }
-    else if (((Temp_N[k] + i - 6) >= n)) {
-      j = Temp_N[k] + i - 6 - n;
+    else if (((Temp_N[k] + i - 5) >= n)) {
+      j = Temp_N[k] + i - 5 - n;
     }
     else {
-      j = Temp_N[k] + i - 6 + n;
+      j = Temp_N[k] + i - 5 + n;
     }
 
     if (!visited[j])
     {
-      visited[j] = true;
+      visited[j] = 1;
       Neighbors2_ctr = RegionQuery(Neighbors2_Temp, D, i);
-      delete [] Neighbors2;
-      Neighbors2 = new int [Neighbors2_ctr];
       for (int ctr_n = 0; ctr_n < Neighbors2_ctr; ctr_n++){
         Neighbors2[ctr_n] = Neighbors2_Temp[ctr_n];
       }
@@ -364,8 +355,6 @@ void ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][10], i
       
       if (Neighbors2_ctr >= MinPts)
       {
-        delete [] Temp_N;
-        Temp_N = new int [Neighbors2_ctr + s];
         for (int ctr = 0; ctr < s; ctr++){
           Temp_N[ctr] = New_Neighbor[ctr];
         }
@@ -382,21 +371,22 @@ void ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][10], i
       IDX[j] = C;
     }
     k++;
-    if (k > s)
+    if (k >= s)
     {
       break;
     }
   }
+  return IDX_Max;
 }
 
 /////////////////////////////////////////////////////////
 ////////////////  Region Query /////////////////////////
 /////////////////////////////////////////////////////////
 
-int RegionQuery(int Neighbors[], float D[][10], int i)
+int RegionQuery(int Neighbors[], float D[][11], int i)
 {
   int k = 0;
-  for (int j = 0; j < 10; j++){
+  for (int j = 0; j < 11; j++){
     if (D[i][j] <= epsilon){
       Neighbors[k] = D[i][j];
       k++;
