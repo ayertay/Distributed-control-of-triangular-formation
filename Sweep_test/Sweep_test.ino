@@ -220,30 +220,23 @@ int DBSCAN(float X[][2], int n, int epsilon, int MinPts, int IDX[])/////////////
       D[i][j] = 0;
     }
   }
-  
+  int t_ctr = 0;
   //D = pdist2(X, X);
-  for (int i = 0; i < 5; i++) {
-    for (int j = 0; j < 6; j++) {
-      D[i][j] = pow((pow((X[n + j - 5][0] - X[i][0]), 2) + pow((X[n + j - 5][1] - X[i][1]), 2)), 0.5);
-    }
-    for (int j = 6; j < 11; j++) {
-      D[i][j] = pow((pow((X[j - 5][0] - X[i][0]), 2) + pow((X[j - 5][1] - X[i][1]), 2)), 0.5); //consider changing 5 to 6
-    }
-  }
-
-  for (int i = 5; i < (n - 5); i++) {
-    for (int j = 0; j < 11; j++) {
-      D[i][j] = pow((pow((X[i + j - 5][0] - X[i][0]), 2) + pow((X[i + j - 5][1] - X[i][1]), 2)), 0.5);
-    }
-  }
-  for (int i = (n - 5); i < n; i++) {
-    for (int j = 0; j < 6; j++) {
-      D[i][j] = pow((pow((X[i + j - 5][0] - X[i][0]), 2) + pow((X[i + j - 5][1] - X[i][1]), 2)), 0.5);
-    }
-    for (int j = 6; j < 11; j++) {
-      D[i][j] = pow((pow((X[j - 5][0] - X[i][0]), 2) + pow((X[j - 5][1] - X[i][1]), 2)), 0.5); //consider changing 5 to 6
+  
+  for (int i = 0; i < n; i++){
+    for (int j = 0; j < 11; j++){
+      t_ctr = i + j - 5;
+      if ( t_ctr < 0){
+        t_ctr = n + t_ctr;
+      }
+      else if (t_ctr >= n){
+        t_ctr = n - t_ctr; 
+      }
+      D[i][j] = pow((pow((X[t_ctr][0] - X[i][0]), 2) + pow((X[t_ctr][1] - X[i][1]), 2)), 0.5);
     }
   }
+  // D matrix logic is totally correct, unless you want to increase j from 11 to higher range
+  
   for (int i = 0; i < n; i++){
     Serial.println("D[1]: " + String(D[i][0]) + ", D[2]: " + String(D[i][1]) + ", D[3]: " + String(D[i][2]) + ", D[4]: " + String(D[i][3]) + ", D[5]: " + String(D[i][4]) + ", D[6]: " + String(D[i][5]) + ", D[7]: " + String(D[i][6]) + ", D[8]: " + String(D[i][7]) + ", D[9]: " + String(D[i][8]) + ", D[10]: " + String(D[i][9]) + ", D[11]: " + String(D[i][10]));
   }
