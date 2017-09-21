@@ -34,7 +34,7 @@ X = [cosd(Angle).*Distance, sind(Angle).*Distance ];
 
 %Max distance = 200 cm
 for i = 1:1:length(X)
-    if ((sqrt(X(i, 1)^2 + X(i, 2)^2) > 300) && (sqrt(X(i, 1)^2 + X(i, 2)^2) < 5))
+    if ((sqrt(X(i, 1)^2 + X(i, 2)^2) > 300) || (sqrt(X(i, 1)^2 + X(i, 2)^2) < 5))
         X(i,1) = 0;
         X(i,2) = 0;
     end

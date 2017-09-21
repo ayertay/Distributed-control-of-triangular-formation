@@ -152,7 +152,7 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
   // Max distance = 300 cm
   for (int i = 0; i < n; i++)
   {
-    if  ((pow((pow((X[i][0]), 2) + pow((X[i][1]), 2)), 0.5) > 300) && (pow((pow((X[i][0]), 2) + pow((X[i][1]), 2)), 0.5) < 5))
+    if  ((pow((pow((X[i][0]), 2) + pow((X[i][1]), 2)), 0.5) > 300) || (pow((pow((X[i][0]), 2) + pow((X[i][1]), 2)), 0.5) < 5))
     {
       X[i][0] = 0;
       X[i][1] = 0;
@@ -198,9 +198,9 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
   }*/
   Serial.print("Matrix size: ");
   Serial.println(n);
-  for (int i = 0; i < n; i++){
-    Serial.println("X[1]: " + String(X[i][0]) + ", X[2]: " + String(X[i][1]) + ", IDX: " + String(IDX[i]));
-  }
+//  for (int i = 0; i < n; i++){
+//    Serial.println("X[1]: " + String(X[i][0]) + ", X[2]: " + String(X[i][1]) + ", IDX: " + String(IDX[i]));
+//  }
   
 }
 
@@ -244,8 +244,9 @@ int DBSCAN(float X[][2], int n, int epsilon, int MinPts, int IDX[])/////////////
       D[i][j] = pow((pow((X[j - 5][0] - X[i][0]), 2) + pow((X[j - 5][1] - X[i][1]), 2)), 0.5); //consider changing 5 to 6
     }
   }
-
-
+  for (int i = 0; i < n; i++){
+    Serial.println("D[1]: " + String(D[i][0]) + ", D[2]: " + String(D[i][1]) + ", D[3]: " + String(D[i][2]) + ", D[4]: " + String(D[i][3]) + ", D[5]: " + String(D[i][4]) + ", D[6]: " + String(D[i][5]) + ", D[7]: " + String(D[i][6]) + ", D[8]: " + String(D[i][7]) + ", D[9]: " + String(D[i][8]) + ", D[10]: " + String(D[i][9]) + ", D[11]: " + String(D[i][10]));
+  }
   //int visited[n] = {0};//// also dynamic
   int visited[600] = {0};
   int isnoise[600] = {0};
@@ -313,7 +314,7 @@ int ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][11], in
   int Neighbors2[100] = {0};
   int Neighbors2_Temp[11] = {0};
   ///////////////////////////////////////////////
-  int k = 0;
+  int k = 1;
   int j = 0;
   while (true)
 {
@@ -323,14 +324,14 @@ int ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][11], in
   }
 
   
-  if (((Temp_N[k] + i - 5) >= 0) && ((Temp_N[k] + i - 5) < n)) {
-      j = Temp_N[k] + i - 5;
+  if (((Temp_N[k] + i - 6) >= 0) && ((Temp_N[k] + i - 6) < n)) {
+      j = Temp_N[k] + i - 6;
     }
-    else if (((Temp_N[k] + i - 5) >= n)) {
-      j = Temp_N[k] + i - 5 - n;
+    else if (((Temp_N[k] + i - 6) >= n)) {
+      j = Temp_N[k] + i - 6 - n;
     }
     else {
-      j = Temp_N[k] + i - 5 + n;
+      j = Temp_N[k] + i - 6 + n;
     }
 
     if (!visited[j])
@@ -371,7 +372,7 @@ int ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][11], in
       IDX[j] = C;
     }
     k++;
-    if (k >= s)
+    if (k > s)
     {
       break;
     }
@@ -387,7 +388,7 @@ int RegionQuery(int Neighbors[], float D[][11], int i)
 {
   int k = 0;
   for (int j = 0; j < 11; j++){
-    if (D[i][j] <= epsilon){
+    if ((D[i][j] <= epsilon) && (D[i][j] > 0)){
       Neighbors[k] = D[i][j];
       k++;
     }

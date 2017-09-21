@@ -127,7 +127,7 @@ function [IDX, isnoise, D]=DBSCAN(X,epsilon,MinPts)
     end
     
     function Neighbors=RegionQuery(i)
-        Neighbors=find(D(i,:)<=epsilon);
+        Neighbors=find((D(i,:)<=epsilon) & (D(i,:)>0));
     end
 
 end
