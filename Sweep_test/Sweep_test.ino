@@ -29,7 +29,7 @@
 
 #include <Sweep.h>
 int epsilon = 10;
-int MinPts = 2;
+int MinPts = 1;
 
 // Create a Sweep device using Serial #1 (RX1 & TX1)
 Sweep device(Serial1);
@@ -106,7 +106,7 @@ void loop()
       }
       Serial.println("\n----------------------NEW SCAN----------------------");
     }
-    Serial.println("Angle: " + String(angles[i], 3) + ", Distance: " + String(distances[i]) + ", Signal Strength: " + String(signalStrengths[i]));
+   // Serial.println("Angle: " + String(angles[i], 3) + ", Distance: " + String(distances[i]) + ", Signal Strength: " + String(signalStrengths[i]));
   }
   float angles_new[500] = {0};            // in degrees (accurate to the millidegree)
   int distances_new[500] = {0};      // in cm
@@ -165,7 +165,7 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
 //  int MinPts = 2;
   int IDX[600] = {0};
   
-  IDX_Max = DBSCAN(X, n, epsilon, MinPts, IDX); //DBSCAN function
+  IDX_Max = DBSCAN(X, n, IDX); //DBSCAN function
   Serial.println(IDX_Max);
   // Taking out clusters with more than 9 points
   /*float avg_dist[100] = {0};
@@ -198,9 +198,9 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
   }*/
   Serial.print("Matrix size: ");
   Serial.println(n);
-//  for (int i = 0; i < n; i++){
-//    Serial.println("X[1]: " + String(X[i][0]) + ", X[2]: " + String(X[i][1]) + ", IDX: " + String(IDX[i]));
-//  }
+  for (int i = 0; i < n; i++){
+    Serial.println("X[1]: " + String(X[i][0]) + ", X[2]: " + String(X[i][1]) + ", IDX: " + String(IDX[i]));
+  }
   
 }
 
@@ -208,7 +208,7 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
 ////////////////  DBSCAN ////////////////////////////////
 /////////////////////////////////////////////////////////
 
-int DBSCAN(float X[][2], int n, int epsilon, int MinPts, int IDX[])///////////////
+int DBSCAN(float X[][2], int n, int IDX[])///////////////
 {
   int C = 0;
   
@@ -237,21 +237,18 @@ int DBSCAN(float X[][2], int n, int epsilon, int MinPts, int IDX[])/////////////
   }
   // D matrix logic is totally correct, unless you want to increase j from 11 to higher range
   
-  for (int i = 0; i < n; i++){
-    Serial.println("D[1]: " + String(D[i][0]) + ", D[2]: " + String(D[i][1]) + ", D[3]: " + String(D[i][2]) + ", D[4]: " + String(D[i][3]) + ", D[5]: " + String(D[i][4]) + ", D[6]: " + String(D[i][5]) + ", D[7]: " + String(D[i][6]) + ", D[8]: " + String(D[i][7]) + ", D[9]: " + String(D[i][8]) + ", D[10]: " + String(D[i][9]) + ", D[11]: " + String(D[i][10]));
-  }
   //int visited[n] = {0};//// also dynamic
   int visited[600] = {0};
   int isnoise[600] = {0};
   
-  int Neighbors[100] = {0};
+  int Neighbors[1000] = {0};
   
   int Neighbors_Temp[11] = {0};
   int Neighbors_ctr = 0;
 
   for (int i = 0; i < n; i++)
   {
-    if (!visited[i])
+    if (visited[i] == 0)
     {
       visited[i] = 1;
       
@@ -274,6 +271,8 @@ int DBSCAN(float X[][2], int n, int epsilon, int MinPts, int IDX[])/////////////
 
     }
 
+    
+
   }
   return IDX_Max;
 }
@@ -292,14 +291,14 @@ int ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][11], in
   int Neighbors2_ctr = 0;
 
   //////////// Experimental algorithm /////////////
-  int New_Neighbor[100] = {0}; //[s]
+  int New_Neighbor[1000] = {0}; //[s]
 
   
   for (int ctr = 0; ctr < s; ctr++){
     New_Neighbor[ctr] = Neighbors[ctr];
   }
   
-  int Temp_N[100] = {0}; //[s]
+  int Temp_N[1000] = {0}; //[s]
   
   for (int ctr = 0; ctr < s; ctr++){
     Temp_N[ctr] = Neighbors[ctr];
@@ -307,7 +306,7 @@ int ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][11], in
   int Neighbors2[100] = {0};
   int Neighbors2_Temp[11] = {0};
   ///////////////////////////////////////////////
-  int k = 1;
+  int k = 0; //it was 1
   int j = 0;
   while (true)
 {
@@ -315,22 +314,21 @@ int ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][11], in
   for (int ctr = 0; ctr < s; ctr++){
     New_Neighbor[ctr] = Temp_N[ctr];
   }
-
   
-  if (((Temp_N[k] + i - 6) >= 0) && ((Temp_N[k] + i - 6) < n)) {
-      j = Temp_N[k] + i - 6;
+  if (((Temp_N[k] + i - 5) >= 0) && ((Temp_N[k] + i - 5) < n)) {
+      j = Temp_N[k] + i - 5;
     }
-    else if (((Temp_N[k] + i - 6) >= n)) {
-      j = Temp_N[k] + i - 6 - n;
+    else if (((Temp_N[k] + i - 5) >= n)) {
+      j = Temp_N[k] + i - 5 - n;
     }
     else {
-      j = Temp_N[k] + i - 6 + n;
+      j = Temp_N[k] + i - 5 + n;
     }
-
-    if (!visited[j])
+    Serial.println(j);
+    if (visited[j] == 0)
     {
       visited[j] = 1;
-      Neighbors2_ctr = RegionQuery(Neighbors2_Temp, D, i);
+      Neighbors2_ctr = RegionQuery(Neighbors2_Temp, D, j);
       for (int ctr_n = 0; ctr_n < Neighbors2_ctr; ctr_n++){
         Neighbors2[ctr_n] = Neighbors2_Temp[ctr_n];
       }
@@ -360,12 +358,13 @@ int ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][11], in
       }
 
     }
+    
     if (IDX[j] == 0)
     {
       IDX[j] = C;
     }
     k++;
-    if (k > s)
+    if (k >= s)
     {
       break;
     }
@@ -382,7 +381,7 @@ int RegionQuery(int Neighbors[], float D[][11], int i)
   int k = 0;
   for (int j = 0; j < 11; j++){
     if ((D[i][j] <= epsilon) && (D[i][j] > 0)){
-      Neighbors[k] = D[i][j];
+      Neighbors[k] = j;
       k++;
     }
      

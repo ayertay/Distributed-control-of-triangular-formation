@@ -22,14 +22,14 @@ close all;
 % X=data.X;
 
 Sweep = load('Sweep.txt');
-first_run = Sweep;
-Angle = first_run(:, 1);
-Distance = first_run(:, 2);
+% first_run = Sweep;
+% Angle = first_run(:, 1);
+% Distance = first_run(:, 2);
 
 
 
-X = [cosd(Angle).*Distance, sind(Angle).*Distance ];
-
+% X = [cosd(Angle).*Distance, sind(Angle).*Distance ];
+X = [Sweep(:, 1) Sweep(:, 2);]
 %%%%%%%%%%%% Filters %%%%%%%%%%%%%%%%%%%
 
 %Max distance = 200 cm
@@ -66,7 +66,7 @@ end
 %% Run DBSCAN Clustering Algorithm
 
 epsilon=10;
-MinPts=2;
+MinPts=1;
 [IDX, isnoise, D] =DBSCAN(X,epsilon,MinPts);
 % IDX = kmeans(B,4,'Distance','cityblock')
 % Taking out clusters with more than 9 points
