@@ -1,32 +1,4 @@
 
-/*
-  Scanse Sweep Arduino Library Examples
-
-  MegaSerialPrinter:
-      - Example sketch for using the Scanse Sweep with the Arduino Mega 2560.
-        Collects 3 complete scans, and then prints the sensor readings
-      - Assumes Sweep sensor is physically connected to Serial #1 (RX1 & TX1)
-        - For the sweep's power, ground, RX & TX pins, follow the connector
-          pinouts in the sweep user manual located here:
-          http://scanse.io/downloads
-        - Be sure to connect RX_device -> TX_arduino & TX_device -> RX_arduino
-      - For best results, you should provide dedicated external 5V power to the Sweep
-        rather than using power from the Arduino. Just be sure to connect the ground
-        from the power source and the arduino. If you are just experimenting, you can
-        run the sweep off the 5V power from the Arduino with the Arduino receiving power
-        over USB. However this has only been tested with an external powered USB hub.
-        It is possible that using a low power USB port (ex: laptop) to power the
-        arduino & sweep together will result in unexpected behavior.
-      - Note that running off of USB power is not entirely adequate for the sweep,
-        so the quantity and qaulity of sensor readings will drop. This is OK for
-        this example, as it is only meant to provide some visual feedback over
-        the serial monitor.
-      - In your own projects, be sure to use dedicated power instead of the USB.
-
-  Created by Scanse LLC, February 21, 2017.
-  Released into the public domain.
-*/
-
 #include <Sweep.h>
 int epsilon = 10;
 int MinPts = 1;
@@ -241,7 +213,7 @@ int DBSCAN(float X[][2], int n, int IDX[])///////////////
   int visited[600] = {0};
   int isnoise[600] = {0};
   
-  int Neighbors[1000] = {0};
+  int Neighbors[1000] = {0};//tekseru kerek, 400den aspauy kerek
   
   int Neighbors_Temp[11] = {0};
   int Neighbors_ctr = 0;
@@ -252,7 +224,7 @@ int DBSCAN(float X[][2], int n, int IDX[])///////////////
     {
       visited[i] = 1;
       
-      Neighbors_ctr = RegionQuery(Neighbors_Temp, D, i);
+      Neighbors_ctr = RegionQuery(Neighbors_Temp, D, i);//check if array changes by reference
       for (int ctr= 0; ctr < Neighbors_ctr; ctr++)
       {
         Neighbors[ctr] = Neighbors_Temp[ctr];
@@ -287,32 +259,19 @@ int ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][11], in
   if (IDX_Max < C){
     IDX_Max = C;
   }
-  
   int Neighbors2_ctr = 0;
-
-  //////////// Experimental algorithm /////////////
-  int New_Neighbor[1000] = {0}; //[s]
-
-  
-  for (int ctr = 0; ctr < s; ctr++){
-    New_Neighbor[ctr] = Neighbors[ctr];
-  }
-  
   int Temp_N[1000] = {0}; //[s]
   
   for (int ctr = 0; ctr < s; ctr++){
     Temp_N[ctr] = Neighbors[ctr];
   }
-  int Neighbors2[100] = {0};
-  int Neighbors2_Temp[11] = {0};
-  ///////////////////////////////////////////////
-  int k = 0; //it was 1
-  int j = 0;
+  int Neighbors2[11] = {0};
+  int k,j = 0; //it was
   while (true)
 {
 /////////////// Try to find a way to change to fixed array instead of dynamic////////////
   for (int ctr = 0; ctr < s; ctr++){
-    New_Neighbor[ctr] = Temp_N[ctr];
+    Neighbors[ctr] = Temp_N[ctr];
   }
   
   if (((Temp_N[k] + i - 5) >= 0) && ((Temp_N[k] + i - 5) < n)) {
@@ -328,10 +287,7 @@ int ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][11], in
     if (visited[j] == 0)
     {
       visited[j] = 1;
-      Neighbors2_ctr = RegionQuery(Neighbors2_Temp, D, j);
-      for (int ctr_n = 0; ctr_n < Neighbors2_ctr; ctr_n++){
-        Neighbors2[ctr_n] = Neighbors2_Temp[ctr_n];
-      }
+      Neighbors2_ctr = RegionQuery(Neighbors2, D, j);
     
       for (int ctr_n = 0; ctr_n < Neighbors2_ctr; ctr_n++){
         if ((Neighbors2[ctr_n] + (j - i)) < 0){
@@ -348,10 +304,10 @@ int ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][11], in
       if (Neighbors2_ctr >= MinPts)
       {
         for (int ctr = 0; ctr < s; ctr++){
-          Temp_N[ctr] = New_Neighbor[ctr];
+          Temp_N[ctr] = Neighbors[ctr];
         }
-        for (int ctr = s; ctr < (Neighbors2_ctr + s); ctr++){
-          Temp_N[ctr] = Neighbors2[ctr];
+        for (int ctr = 0; ctr < Neighbors2_ctr; ctr++){
+          Temp_N[ctr+s] = Neighbors2[ctr];
         }
         s = Neighbors2_ctr + s;
         ////Neighbors = [Neighbors Neighbors2]; //#ok//////////////
@@ -381,7 +337,7 @@ int RegionQuery(int Neighbors[], float D[][11], int i)
   int k = 0;
   for (int j = 0; j < 11; j++){
     if ((D[i][j] <= epsilon) && (D[i][j] > 0)){
-      Neighbors[k] = j;
+      Neighbors[k] = j;//j-di tekser, j+1 bolyp jiberip jatqan joq pa
       k++;
     }
      
