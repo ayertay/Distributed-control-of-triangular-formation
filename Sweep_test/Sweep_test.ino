@@ -1,7 +1,7 @@
 
 #include <Sweep.h>
 int epsilon = 10;
-int MinPts = 1;
+int MinPts = 2;
 
 // Create a Sweep device using Serial #1 (RX1 & TX1)
 Sweep device(Serial1);
@@ -223,6 +223,10 @@ int DBSCAN(float X[][2], int n, int IDX[])///////////////
     if (visited[i] == 0)
     {
       visited[i] = 1;
+      Serial.print("Neighbors1 visited: ");
+      Serial.print(visited[i]);
+      Serial.print(" Value of i: ");
+      Serial.println(i);
       
       Neighbors_ctr = RegionQuery(Neighbors_Temp, D, i);//check if array changes by reference
       for (int ctr= 0; ctr < Neighbors_ctr; ctr++)
@@ -237,7 +241,7 @@ int DBSCAN(float X[][2], int n, int IDX[])///////////////
       }
       else
       {
-        C++;
+        C=C+1;
         IDX_Max = ExpandCluster(i, Neighbors, Neighbors_ctr, C, n, D, IDX, visited); //can be changed to array that contains Neighbors
       }
 
@@ -266,9 +270,10 @@ int ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][11], in
     Temp_N[ctr] = Neighbors[ctr];
   }
   int Neighbors2[11] = {0};
-  int k,j = 0; //it was
-  while (true)
-{
+  int k = 0;
+  int j = 0;
+  int true_val = 1;
+while (true_val){
 /////////////// Try to find a way to change to fixed array instead of dynamic////////////
   for (int ctr = 0; ctr < s; ctr++){
     Neighbors[ctr] = Temp_N[ctr];
@@ -283,12 +288,12 @@ int ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][11], in
     else {
       j = Temp_N[k] + i - 5 + n;
     }
-    Serial.println(j);
+
     if (visited[j] == 0)
     {
+      Serial.println("I am inside the loop!");
       visited[j] = 1;
       Neighbors2_ctr = RegionQuery(Neighbors2, D, j);
-    
       for (int ctr_n = 0; ctr_n < Neighbors2_ctr; ctr_n++){
         if ((Neighbors2[ctr_n] + (j - i)) < 0){
           Neighbors2[ctr_n] = Neighbors2[ctr_n] + (j - i) + n;
@@ -309,6 +314,7 @@ int ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][11], in
         for (int ctr = 0; ctr < Neighbors2_ctr; ctr++){
           Temp_N[ctr+s] = Neighbors2[ctr];
         }
+        
         s = Neighbors2_ctr + s;
         ////Neighbors = [Neighbors Neighbors2]; //#ok//////////////
       }
@@ -322,7 +328,7 @@ int ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][11], in
     k++;
     if (k >= s)
     {
-      break;
+      true_val = 0;
     }
   }
   return IDX_Max;
@@ -336,7 +342,7 @@ int RegionQuery(int Neighbors[], float D[][11], int i)
 {
   int k = 0;
   for (int j = 0; j < 11; j++){
-    if ((D[i][j] <= epsilon) && (D[i][j] > 0)){
+    if ((D[i][j] <= epsilon)){
       Neighbors[k] = j;//j-di tekser, j+1 bolyp jiberip jatqan joq pa
       k++;
     }
