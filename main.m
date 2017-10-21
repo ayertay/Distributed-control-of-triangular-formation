@@ -58,36 +58,36 @@ MinPts=1;
 [IDX, isnoise, D] =DBSCAN(X,epsilon,MinPts);
 % IDX = kmeans(B,4,'Distance','cityblock')
 % Taking out clusters with more than 9 points
-% avg_dist = zeros(max(IDX), 1);
-% X_avg = zeros(max(IDX), 1);
-% Y_avg = zeros(max(IDX), 1);
-%     for ctr = max(IDX):-1:1
-%         k = 0;
-%         for j = 1:1:length(IDX)
-%             if (IDX(j) == ctr)
-%                 k=k+1;
-%                 X_avg(ctr) = X(j,1) + X_avg(ctr);
-%                 Y_avg(ctr) = X(j,2) + Y_avg(ctr);
-%                 avg_dist(ctr) = sqrt(X(j, 1)^2 + X(j, 2)^2) + avg_dist(ctr);
-%             end
-%         end
-%         X_avg(ctr) = X_avg(ctr)/k;
-%         Y_avg(ctr) = Y_avg(ctr)/k;
-%         avg_dist(ctr) = avg_dist(ctr)/k;
-%         % k - number of points in cluster, 9 is max at closest distance,
-%         % 800 is 200 cm times 4 cluster points at 200 distance (measure
-%         % again)
-%         if ((k > 9) || (k*avg_dist(ctr) > 800))
-%             X_avg(ctr) = 0;
-%             Y_avg(ctr) = 0;
-%             avg_dist(ctr) = 0;
-%             for j = 1:1:length(IDX)
-%                 if (IDX(j) == ctr)
-%                     IDX(j) = 0;
-%                 end
-%             end
-%         end
-%     end
+avg_dist = zeros(max(IDX), 1);
+X_avg = zeros(max(IDX), 1);
+Y_avg = zeros(max(IDX), 1);
+    for ctr = max(IDX):-1:1
+        k = 0;
+        for j = 1:1:length(IDX)
+            if (IDX(j) == ctr)
+                k=k+1;
+                X_avg(ctr) = X(j,1) + X_avg(ctr);
+                Y_avg(ctr) = X(j,2) + Y_avg(ctr);
+                avg_dist(ctr) = sqrt(X(j, 1)^2 + X(j, 2)^2) + avg_dist(ctr);
+            end
+        end
+        X_avg(ctr) = X_avg(ctr)/k;
+        Y_avg(ctr) = Y_avg(ctr)/k;
+        avg_dist(ctr) = avg_dist(ctr)/k;
+        % k - number of points in cluster, 9 is max at closest distance,
+        % 800 is 200 cm times 4 cluster points at 200 distance (measure
+        % again)
+        if ((k > 9) || (k*avg_dist(ctr) > 800))
+            X_avg(ctr) = 0;
+            Y_avg(ctr) = 0;
+            avg_dist(ctr) = 0;
+            for j = 1:1:length(IDX)
+                if (IDX(j) == ctr)
+                    IDX(j) = 0;
+                end
+            end
+        end
+    end
 
 %% Plot Results
 
