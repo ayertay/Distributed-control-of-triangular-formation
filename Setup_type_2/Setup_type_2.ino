@@ -5,7 +5,7 @@
 #include <DueTimer.h>
 #include <Sweep.h>
 int epsilon = 10; //DBSCAN cluster diameter
-int MinPts = 2; //DBSCAN cluster min size 
+int MinPts = 2; //DBSCAN cluster min size
 
 // Create a Sweep device using Serial #1 (RX1 & TX1)
 Sweep device(Serial1);
@@ -18,10 +18,10 @@ int scanCount = 0;
 int sampleCount = 0;
 
 // Arrays to store attributes of collected scans
-bool syncValues[1000];         // 1 -> first reading of new scan, 0 otherwise
-float angles[1000];            // in degrees (accurate to the millidegree)
-int distances[1000];      // in cm
-int signalStrengths[1000]; // 0:255, higher is better
+bool syncValues[1500];         // 1 -> first reading of new scan, 0 otherwise
+float angles[1500];            // in degrees (accurate to the millidegree)
+int distances[1500];      // in cm
+int signalStrengths[1500]; // 0:255, higher is better
 
 // define communication wires with iRobot
 const int rxPin = 10;
@@ -29,8 +29,8 @@ const int txPin = 11;
 const int ddPin = 12;
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-#define d_ideal1         70 //Distance to iRobot needs to keep from agent 1
-#define d_ideal2         100 //Distance to iRobot needs to keep from agent 2 
+#define d_ideal1         80 //Distance to iRobot needs to keep from agent 1
+#define d_ideal2         110 //Distance to iRobot needs to keep from agent 2 
 #define k_v             15
 #define time_step       7
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
@@ -107,16 +107,16 @@ void loop()
   sampleCount = 0;
   device.startScanning();
   Serial.println("2" );
-  while (sampleCount < 1000) {
+  while (sampleCount < 1500) {
     bool success = false;
     ScanPacket reading = device.getReading(success);
     if (success)
     {
       // store the info for this sample
-    syncValues[sampleCount] = reading.isSync();
-    angles[sampleCount] = reading.getAngleDegrees();
-    distances[sampleCount] = reading.getDistanceCentimeters();
-    signalStrengths[sampleCount] = reading.getSignalStrength();
+      syncValues[sampleCount] = reading.isSync();
+      angles[sampleCount] = reading.getAngleDegrees();
+      distances[sampleCount] = reading.getDistanceCentimeters();
+      signalStrengths[sampleCount] = reading.getSignalStrength();
 
       // increment sample count
       sampleCount++;
@@ -134,6 +134,7 @@ void loop()
   {
     indexOfFirstSyncReading++;
   }
+  int indexOfSecondSyncReading = 0;
   // print the readings for all the complete scans
   Serial.print("Index of first reading: ");
   Serial.println(indexOfFirstSyncReading);
@@ -143,7 +144,12 @@ void loop()
     {
       new_scan_ctr++;
       if (new_scan_ctr == 2) {
-        matrix_size = i - indexOfFirstSyncReading;
+        indexOfSecondSyncReading = i;
+        Serial.println(indexOfSecondSyncReading);
+      }
+      
+      if (new_scan_ctr == 3) {
+        matrix_size = i - indexOfSecondSyncReading;
         Serial.println(matrix_size);
       }
       Serial.println("\n----------------------NEW SCAN----------------------");
@@ -152,10 +158,10 @@ void loop()
   }
   float angles_new[500] = {0};            // in degrees (accurate to the millidegree)
   int distances_new[500] = {0};      // in cm
-  for (int i = indexOfFirstSyncReading; i < (matrix_size + indexOfFirstSyncReading); i++)
+  for (int i = indexOfSecondSyncReading; i < (matrix_size + indexOfSecondSyncReading); i++)
   {
-    angles_new[i - indexOfFirstSyncReading] = angles[i];
-    distances_new[i - indexOfFirstSyncReading] = distances[i];
+    angles_new[i - indexOfSecondSyncReading] = angles[i];
+    distances_new[i - indexOfSecondSyncReading] = distances[i];
   }
   DBSCAN_Main(angles_new, distances_new, matrix_size); //Sends DBSCAN angles from 0 to 360 degrees, corresponding distances, and size of those arrays
 
@@ -176,7 +182,7 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
   int IDX_Max = 0; //Maximum value in IDX
   for (int i = 0; i < n; i++) {
     //change to Cartesian
-    X[i][0] = cos(Angle[i] * PI / 180) * Distance[i]; 
+    X[i][0] = cos(Angle[i] * PI / 180) * Distance[i];
     X[i][1] = sin(Angle[i] * PI / 180) * Distance[i];
   }
 
@@ -197,7 +203,7 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
   // Run DBSCAN Clustering Algorithm
 
   int IDX[600] = {0}; //array that assigns cluster number to each X, Y point
-  
+
   IDX_Max = DBSCAN(X, n, IDX); //DBSCAN function
   Serial.print("IDX MAX: ");
   Serial.println(IDX_Max);
@@ -212,7 +218,8 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
   float avg_dist2[100] = {0};
   float avg_angle_temp = 0;
   float avg_dist2_temp = 0; //from distance matrix
-  
+  float k_over_dist[100] = {0};
+
   for (int i = IDX_Max - 1; i >= 0; i--)
   {
     Serial.println(i);
@@ -235,16 +242,17 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
       }
     }
     Serial.println("5");
-    X_avg[i] = X_avg[i]/(float)k;
-    Y_avg[i] = Y_avg[i]/(float)k;
+    X_avg[i] = X_avg[i] / (float)k;
+    Y_avg[i] = Y_avg[i] / (float)k;
     avg_dist[i] = avg_dist[i] / (float)k;
     avg_dist2[i] = avg_dist2[i] / (float)k;
     avg_angle[i] = avg_angle[i] / (float)k;
+    k_over_dist[i] = (float)k / avg_dist[i];
     Serial.println("6");
     /* k - number of points in cluster, 9 is max at closest distance,
       800 is 200 cm times 4 cluster points at 200 distance (measure
       again) */
-    if ((k > 9) || (k * avg_dist[i] > 800))
+    if ((k > 50) || (k * avg_dist[i] > 3000))
     {
       X_avg[i] = 0;
       Y_avg[i] = 0;
@@ -259,10 +267,14 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
     }
     Serial.println("7");
   }
+
+  for (int i = 0; i < IDX_Max; i++){
+    Serial.println("Avg Distance: " + String(avg_dist[i], 3));
+  }
   int final_ctr = 0;
   Serial.println("8");
   // Identify agents as first two clusters and send their position, and distance further to formation()
-  while(avg_dist[final_ctr] == 0){
+  while ((avg_dist[final_ctr] == 0) && (final_ctr < IDX_Max)) {
     final_ctr++;
   }
   Serial.println("9");
@@ -272,9 +284,10 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
   D2[0] = Y_avg[final_ctr];
   avg_dist2[0] = avg_dist2[final_ctr];
   avg_angle[0] = avg_angle[final_ctr];
+  int agent_ind1 = final_ctr;
   final_ctr++;
   Serial.println("10");
-  while(avg_dist[final_ctr] == 0){
+  while ((avg_dist[final_ctr] == 0) && (final_ctr < IDX_Max)) {
     final_ctr++;
   }
   Serial.println("11");
@@ -283,11 +296,31 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
   D2[1] = Y_avg[final_ctr];
   avg_dist2[1] = avg_dist2[final_ctr];
   avg_angle[1] = avg_angle[final_ctr];
+  int agent_ind2 = final_ctr;
+  if ((distance_abs[0] == 0) || (distance_abs[1] == 0)){
+    D1[0] = 0;
+    D1[1] = 0;
+    D2[0] = 0;
+    D2[1] = 0;
+  }
+  int Temp_Dist_abs = distance_abs[0];
+  int Temp_D10 = D1[0];
+  int Temp_D20 = D2[0];
+  if (k_over_dist[agent_ind1] < k_over_dist[agent_ind2]){
+    distance_abs[0] = distance_abs[1];
+    D1[0] = D1[1];
+    D2[0] = D2[1];
+    distance_abs[1] = Temp_Dist_abs;
+    D1[1] = Temp_D10;
+    D2[1] = Temp_D20;
+  }
+
+  
   Serial.print("Matrix size: ");
   Serial.println(n);
   Serial.println("distance_abs[0]: " + String(distance_abs[0]) + ", distance_abs[1]: " + String(distance_abs[1]) + ", D1[0]" + String(D1[0]) + ", D2[0]" + String(D2[0]) + ", D1[1]" + String(D1[1]) + ", D2[1]" + String(D2[1]));
   Serial.println("Distance2[0]" + String(avg_dist2[0]) + ", Angle[0]" + String(avg_angle[0])  + ", Distance2[1]" + String(avg_dist2[1]) + ", Angle[1]" + String(avg_angle[1]));
-  
+
 }
 
 /////////////////////////////////////////////////////////
@@ -297,37 +330,39 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
 int DBSCAN(float X[][2], int n, int IDX[])///////////////
 {
   int C = 0;
-  
+  Serial.println("Inside the DBSCAN");
   int IDX_Max = 0; //Maximum value in IDX
   float D[600][11]; //Matrix that contains distance from current point to 5 points to the left and 5 points to the right
 
-  for (int i = 0; i < 600; i++){
-    for (int j = 0; j < 11; j++){
+  for (int i = 0; i < 600; i++) {
+    for (int j = 0; j < 11; j++) {
       D[i][j] = 0;
     }
   }
+  Serial.println("First Loop ends");
   int t_ctr = 0;
   //D = pdist2(X, X);
-  
-  for (int i = 0; i < n; i++){
-    for (int j = 0; j < 11; j++){
+
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < 11; j++) {
       t_ctr = i + j - 5;
-      if ( t_ctr < 0){
+      if ( t_ctr < 0) {
         t_ctr = n + t_ctr;
       }
-      else if (t_ctr >= n){
-        t_ctr = n - t_ctr; 
+      else if (t_ctr >= n) {
+        t_ctr = n - t_ctr;
       }
       D[i][j] = pow((pow((X[t_ctr][0] - X[i][0]), 2) + pow((X[t_ctr][1] - X[i][1]), 2)), 0.5);
     }
   }
+  Serial.println("Seconds Loop ends");
   // D matrix logic is totally correct, unless you want to increase j from 11 to higher range
-  
+
   int visited[600] = {0}; //Since I made arrays with constant size instead of making them dynamic, I chose 600 to be safe number
   int isnoise[600] = {0}; //because usually array size of angles sent is around 400
-  
+
   int Neighbors[1000] = {0};//tekseru kerek, 400den aspauy kerek
-  
+
   int Neighbors_Temp[11] = {0};
   int Neighbors_ctr = 0;
 
@@ -335,13 +370,13 @@ int DBSCAN(float X[][2], int n, int IDX[])///////////////
   {
     if (visited[i] == 0)
     {
-      visited[i] = 1;      
+      visited[i] = 1;
       Neighbors_ctr = RegionQuery(Neighbors_Temp, D, i); //check if array changes by reference
-      for (int ctr= 0; ctr < Neighbors_ctr; ctr++)
+      for (int ctr = 0; ctr < Neighbors_ctr; ctr++)
       {
         Neighbors[ctr] = Neighbors_Temp[ctr];
       }
-      
+
       if (Neighbors_ctr < MinPts)
       {
         // X(i,:) is NOISE
@@ -349,15 +384,13 @@ int DBSCAN(float X[][2], int n, int IDX[])///////////////
       }
       else
       {
-        C=C+1;
+        C = C + 1;
         IDX_Max = ExpandCluster(i, Neighbors, Neighbors_ctr, C, n, D, IDX, visited); //can be changed to array that contains Neighbors
       }
 
     }
-
-    
-
   }
+  Serial.println("Third loop ends");
   return IDX_Max;
 }
 /////////////////////////////////////////////////////////
@@ -366,27 +399,29 @@ int DBSCAN(float X[][2], int n, int IDX[])///////////////
 
 int ExpandCluster(int i, int Neighbors[], int s, int C, int n, float D[][11], int IDX[], int visited[])////////////////
 {
+  Serial.println("Inside the ExpandCluster");
   IDX[i] = C;
   int IDX_Max = 1;
-  if (IDX_Max < C){
+  if (IDX_Max < C) {
     IDX_Max = C;
   }
   int Neighbors2_ctr = 0;
   int Temp_N[1000] = {0}; //[s]
-  
-  for (int ctr = 0; ctr < s; ctr++){
+
+  for (int ctr = 0; ctr < s; ctr++) {
     Temp_N[ctr] = Neighbors[ctr];
   }
+  Serial.println("1st for loop");
   int Neighbors2[11] = {0};
   int k = 0;
   int j = 0;
   int true_val = 1;
-while (true_val){
-  for (int ctr = 0; ctr < s; ctr++){
-    Neighbors[ctr] = Temp_N[ctr];
-  }
-  
-  if (((Temp_N[k] + i - 5) >= 0) && ((Temp_N[k] + i - 5) < n)) {
+  while (true_val && (s < 999))
+  {
+    for (int ctr = 0; ctr < s; ctr++) {
+      Neighbors[ctr] = Temp_N[ctr];
+    }
+    if (((Temp_N[k] + i - 5) >= 0) && ((Temp_N[k] + i - 5) < n)) {
       j = Temp_N[k] + i - 5;
     }
     else if (((Temp_N[k] + i - 5) >= n)) {
@@ -400,33 +435,33 @@ while (true_val){
     {
       visited[j] = 1;
       Neighbors2_ctr = RegionQuery(Neighbors2, D, j);
-      for (int ctr_n = 0; ctr_n < Neighbors2_ctr; ctr_n++){
-        if ((Neighbors2[ctr_n] + (j - i)) < 0){
+      for (int ctr_n = 0; ctr_n < Neighbors2_ctr; ctr_n++) {
+        if ((Neighbors2[ctr_n] + (j - i)) < 0) {
           Neighbors2[ctr_n] = Neighbors2[ctr_n] + (j - i) + n;
         }
-        else if ((Neighbors2[ctr_n] + (j - i)) >= n){
+        else if ((Neighbors2[ctr_n] + (j - i)) >= n) {
           Neighbors2[ctr_n] = Neighbors2[ctr_n] + (j - i) - n;
         }
-        else{
+        else {
           Neighbors2[ctr_n] = Neighbors2[ctr_n] + (j - i);
         }
       }
-      
+
       if (Neighbors2_ctr >= MinPts)
       {
-        for (int ctr = 0; ctr < s; ctr++){
+        for (int ctr = 0; ctr < s; ctr++) {
           Temp_N[ctr] = Neighbors[ctr];
         }
-        for (int ctr = 0; ctr < Neighbors2_ctr; ctr++){
-          Temp_N[ctr+s] = Neighbors2[ctr];
+        for (int ctr = 0; ctr < Neighbors2_ctr; ctr++) {
+          Temp_N[ctr + s] = Neighbors2[ctr];
         }
-        
+
         s = Neighbors2_ctr + s;
         ////Neighbors = [Neighbors Neighbors2]; //#ok//////////////
       }
 
     }
-    
+
     if (IDX[j] == 0)
     {
       IDX[j] = C;
@@ -447,12 +482,12 @@ while (true_val){
 int RegionQuery(int Neighbors[], float D[][11], int i)
 {
   int k = 0;
-  for (int j = 0; j < 11; j++){
-    if ((D[i][j] <= epsilon)){
+  for (int j = 0; j < 11; j++) {
+    if ((D[i][j] <= epsilon)) {
       Neighbors[k] = j;//j-di tekser, j+1 bolyp jiberip jatqan joq pa
       k++;
     }
-     
+
   }
   return k;
 }
@@ -479,7 +514,7 @@ struct formInfo formCalcVel() {
   k1 = sq(d1) - sq(d_ideal1);
   k2 = sq(d2) - sq(d_ideal2);
   V1 = round(D1[0]  * k1 + D1[1] * k2); // velocity component x
-  V2 = round(D2[0]  * k1 + D1[1] * k2); /////////////////////////////
+  V2 = round(D2[0]  * k1 + D2[1] * k2); /////////////////////////////
 
   form_velocity = float(k_v) * float(sqrt(sq(V1 / 1000000.0) + sq(V2 / 1000000.0)));
   Serial.print("Check vel: ");
@@ -546,7 +581,7 @@ void formAtion() {
     while ( (millis() - t_form) < (-t_r) )
     {
       if (safe_switch) drive(100, -1);
-      //rotate right 
+      //rotate right
     }
   }
 
