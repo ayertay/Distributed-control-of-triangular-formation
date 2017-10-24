@@ -1,6 +1,6 @@
 // Setup Parameters
 #include <Wire.h>
-#include <MatrixMath.h>
+//#include <MatrixMath.h>
 #include <math.h>
 #include <DueTimer.h>
 #include <Sweep.h>
@@ -148,7 +148,7 @@ void loop()
       }
       Serial.println("\n----------------------NEW SCAN----------------------");
     }
-    // Serial.println("Angle: " + String(angles[i], 3) + ", Distance: " + String(distances[i]) + ", Signal Strength: " + String(signalStrengths[i]));
+    Serial.println("Angle: " + String(angles[i], 3) + ", Distance: " + String(distances[i]) + ", Signal Strength: " + String(signalStrengths[i]));
   }
   float angles_new[500] = {0};            // in degrees (accurate to the millidegree)
   int distances_new[500] = {0};      // in cm
@@ -171,7 +171,7 @@ void loop()
 
 void DBSCAN_Main(float Angle[], int Distance[], int n)
 {
-  
+  Serial.println("Inside the DBSCAN_Main");
   float X[600][2];
   int IDX_Max = 0; //Maximum value in IDX
   for (int i = 0; i < n; i++) {
@@ -181,7 +181,7 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
   }
 
   /************** Filters *********************/
-
+  Serial.println("After first loop in DBSCAN_Main");
   // Max distance = 300 cm
   for (int i = 0; i < n; i++)
   {
@@ -192,6 +192,7 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
       X[i][1] = 0;
     }
   }
+  Serial.println("About to enter DBSCAN");
 
   // Run DBSCAN Clustering Algorithm
 
