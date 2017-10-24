@@ -185,8 +185,8 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
   // Max distance = 300 cm
   for (int i = 0; i < n; i++)
   {
-    //anything further than 300 cm and below 5 cm are noise (3 m is all we need to test the iRobots)
-    if  ((pow((pow((X[i][0]), 2) + pow((X[i][1]), 2)), 0.5) > 300) || (pow((pow((X[i][0]), 2) + pow((X[i][1]), 2)), 0.5) < 5))
+    //anything further than 250 cm and below 5 cm are noise (2.5 m is all we need to test the iRobots)
+    if  ((pow((pow((X[i][0]), 2) + pow((X[i][1]), 2)), 0.5) > 200) || (pow((pow((X[i][0]), 2) + pow((X[i][1]), 2)), 0.5) < 5))
     {
       X[i][0] = 0;
       X[i][1] = 0;
@@ -218,10 +218,8 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
     int k = 0;
     for (int j = 0; j < n; j++)
     {
-      Serial.println("First for loop");
       if (IDX[j] == i)
       {
-        Serial.println("If loop");
         k++;
         X_avg_temp = X[j][0] + X_avg[i];
         Y_avg_temp = X[j][1] + Y_avg[i];
@@ -286,10 +284,8 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
   avg_angle[1] = avg_angle[final_ctr];
   Serial.print("Matrix size: ");
   Serial.println(n);
-  for (int i = 0; i < n; i++){
-    Serial.println("distance_abs[0]: " + String(distance_abs[0]) + ", distance_abs[1]: " + String(distance_abs[1]) + ", D1[0]" + String(D1[0]) + ", D2[0]" + String(D2[0]) + ", D1[1]" + String(D1[1]) + ", D2[1]" + String(D2[1]));
-    Serial.println("Distance2[0]" + String(avg_dist2[0]) + ", Angle[0]" + String(avg_angle[0])  + ", Distance2[1]" + String(avg_dist2[1]) + ", Angle[1]" + String(avg_angle[1]));
-  }
+  Serial.println("distance_abs[0]: " + String(distance_abs[0]) + ", distance_abs[1]: " + String(distance_abs[1]) + ", D1[0]" + String(D1[0]) + ", D2[0]" + String(D2[0]) + ", D1[1]" + String(D1[1]) + ", D2[1]" + String(D2[1]));
+  Serial.println("Distance2[0]" + String(avg_dist2[0]) + ", Angle[0]" + String(avg_angle[0])  + ", Distance2[1]" + String(avg_dist2[1]) + ", Angle[1]" + String(avg_angle[1]));
   
 }
 
