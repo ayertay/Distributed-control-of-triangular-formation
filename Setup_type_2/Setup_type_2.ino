@@ -29,8 +29,8 @@ const int txPin = 11;
 const int ddPin = 12;
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-#define d_ideal1         80 //Distance to iRobot needs to keep from agent 1
-#define d_ideal2         110 //Distance to iRobot needs to keep from agent 2 
+#define d_ideal1         70 //Distance to iRobot needs to keep from agent 1
+#define d_ideal2         100 //Distance to iRobot needs to keep from agent 2 
 #define k_v             15
 #define time_step       7
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
@@ -292,7 +292,7 @@ void DBSCAN_Main(float Angle[], int Distance[], int n)
   int agent_ind1 = final_ctr;
   final_ctr++;
   Serial.println("10");
-  while ((avg_dist[final_ctr] == 0) && (final_ctr < IDX_Max)) {
+  while (((avg_dist[final_ctr] == 0) && !(isnan(avg_dist[final_ctr]))) && (final_ctr < IDX_Max)) {
     final_ctr++;
   }
   Serial.println("11");
